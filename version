@@ -6,7 +6,7 @@ local currentVersion = "0.0.0" -- This should match the version in your main scr
 -- Fetch the latest version from GitHub
 local function checkVersion()
     local success, result = pcall(function()
-        return HttpService:GetAsync("https://raw.githubusercontent.com/LoIScript/LolScript-Roblox/refs/heads/main/rooms%20Script)
+        return loadstring(game:HttpGet(('https://raw.githubusercontent.com/LoIScript/LolScript-Roblox/refs/heads/main/rooms%20Script')))()
     end)
     
     if success then
