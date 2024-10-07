@@ -1,0 +1,30 @@
+local HttpService = game:GetService("HttpService")
+
+-- URL to your GitHub file containing the latest version (replace with your actual GitHub URL)
+local versionFileURL = "https://raw.githubusercontent.com/LoIScript/LolScript-Roblox/main/latest_version.txt"
+
+-- Function to fetch the latest version from GitHub
+local function getLatestVersion()
+    local success, result = pcall(function()
+        return HttpService:GetAsync(versionFileURL)
+    end)
+
+    if success then
+        return result -- The version number from GitHub
+    else
+        warn("Failed to fetch the latest version from GitHub:", result)
+        return nil
+    end
+end
+
+-- Check the version
+local latestVersion = getLatestVersion()
+if latestVersion then
+    if latestVersion ~= currentVersion then
+        setVersionLabel("Version: " .. currentVersion .. " | Outdated, please update by going to the LoiScript channel")
+    else
+        setVersionLabel("Version: " .. currentVersion)
+    end
+else
+    setVersionLabel("Version: " .. currentVersion .. " | Unable to check for updates")
+end
