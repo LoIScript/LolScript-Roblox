@@ -1,0 +1,200 @@
+-- Load Orion UI Library
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+-- Variables
+local currentVersion = "0.0.0" -- The current version of the script
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- ESP Configurations for Monsters and Doors
+local monsterSearchItems = {
+    ["A25"] = {Color3.new(50 / 255, 81 / 255, 168 / 255), 0.5, "A-25"},
+    ["Monster1"] = {Color3.new(50 / 255, 81 / 255, 168 / 255), 0.5, "A-60"},
+    ["Monster2"] = {Color3.new(50 / 255, 81 / 255, 168 / 255), 0.5, "A-100"},
+    ["A150"] = {Color3.new(50 / 255, 81 / 255, 168 / 255), 0.5, "A-150"},
+}
+
+local doorSearchItems = {
+    ["door"] = {Color3.new(50 / 255, 81 / 255, 168 / 255), 0.5, "Door"},
+}
+
+local updateTime = 0.75 -- Update interval for ESP
+
+-- Main Tab
+local Window = OrionLib:MakeWindow({Name = "Game Script", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"})
+
+-- Create Main Tab
+local MainTab = Window:MakeTab({Name = "Main", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+
+-- Version Display
+MainTab:AddLabel("Version: " .. currentVersion) -- Display the current version at the top
+
+-- Fulbright
+local fulbrightEnabled = false
+local function applyFulbright()
+    if fulbrightEnabled then
+        while fulbrightEnabled do
+            game.Lighting.Brightness = 2
+            game.Lighting.FogEnd = 100000
+            game.Lighting.GlobalShadows = false
+            game.Lighting.ClockTime = 12
+            wait(0.5)
+        end
+    else
+        -- Reset Lighting settings when disabled
+        game.Lighting.Brightness = 1
+        game.Lighting.FogEnd = 1000
+        game.Lighting.GlobalShadows = true
+        game.Lighting.ClockTime = 14
+    end
+end
+
+-- Walkspeed
+local walkspeed = 16
+local function applyWalkspeed()
+    while true do
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.WalkSpeed = walkspeed
+        end
+        wait(0.1) -- Loop the walkspeed constantly
+    end
+end
+spawn(applyWalkspeed)
+
+-- Remove Useless Monsters (A25)
+local removeMonstersEnabled = false
+local function removeUselessMonsters()
+    while removeMonstersEnabled do
+        local a25 = workspace:FindFirstChild("A25")
+        if a25 then
+            a25:Destroy()
+        end
+        wait(1)
+    end
+end
+
+-- Monster ESP
+local espMonstersEnabled = false
+local function createHighlightAndBillboard(object, color, transparency, text)
+    if object:FindFirstChild("ESP_Highlight") or object:FindFirstChild("ESP_Billboard") then return end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESP_Highlight"
+    highlight.Parent = object
+    highlight.Adornee = object
+    highlight.FillColor = color
+    highlight.FillTransparency = transparency
+    highlight.OutlineColor = color
+
+    local billboardGui = Instance.new("BillboardGui")
+    billboardGui.Name = "ESP_Billboard"
+    billboardGui.Adornee = object
+    billboardGui.Size = UDim2.new(0, 200, 0, 50)
+    billboardGui.StudsOffset = Vector3.new(0, 3, 0)
+    billboardGui.AlwaysOnTop = true
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Parent = billboardGui
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = color
+    textLabel.TextStrokeTransparency = 0
+    textLabel.Text = text
+
+    billboardGui.Parent = object
+end
+
+local function clearInvalidHighlightsAndBillboards(searchItems)
+    for _, object in pairs(workspace:GetDescendants()) do
+        local highlight = object:FindFirstChild("ESP_Highlight")
+        local billboard = object:FindFirstChild("ESP_Billboard")
+        if highlight and not searchItems[object.Name] then highlight:Destroy() end
+        if billboard and not searchItems[object.Name] then billboard:Destroy() end
+    end
+end
+
+local function updateESP(searchItems)
+    while true do
+        clearInvalidHighlightsAndBillboards(searchItems)
+        for _, object in pairs(workspace:GetDescendants()) do
+            if searchItems[object.Name] then
+                local color = searchItems[object.Name][1]
+                local transparency = searchItems[object.Name][2]
+                local text = searchItems[object.Name][3]
+                createHighlightAndBillboard(object, color, transparency, text)
+            end
+        end
+        wait(updateTime)
+    end
+end
+
+local function toggleMonsterESP(enabled)
+    if enabled then
+        spawn(function() updateESP(monsterSearchItems) end)
+    end
+end
+
+-- Door ESP
+local espDoorsEnabled = false
+local function toggleDoorESP(enabled)
+    if enabled then
+        spawn(function() updateESP(doorSearchItems) end)
+    end
+end
+
+MainTab:AddToggle({
+    Name = "Fulbright",
+    Default = false,
+    Callback = function(value)
+        fulbrightEnabled = value
+        applyFulbright()
+    end    
+})
+
+MainTab:AddSlider({
+    Name = "Walkspeed",
+    Min = 16,
+    Max = 55,
+    Default = 16,
+    Color = Color3.fromRGB(255, 0, 0),
+    Increment = 1,
+    ValueName = "Speed",
+    Callback = function(value)
+        walkspeed = value
+    end    
+})
+
+MainTab:AddToggle({
+    Name = "Remove Useless Monsters (A25)",
+    Default = false,
+    Callback = function(value)
+        removeMonstersEnabled = value
+        if value then
+            spawn(removeUselessMonsters)
+        end
+    end    
+})
+
+-- ESP Tab
+local ESPTab = Window:MakeTab({Name = "ESP", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+
+ESPTab:AddToggle({
+    Name = "Monster ESP",
+    Default = false,
+    Callback = function(value)
+        espMonstersEnabled = value
+        toggleMonsterESP(value)
+    end    
+})
+
+ESPTab:AddToggle({
+    Name = "Door ESP",
+    Default = false,
+    Callback = function(value)
+        espDoorsEnabled = value
+        toggleDoorESP(value)
+    end    
+})
+
+-- Load UI
+OrionLib:Init()
