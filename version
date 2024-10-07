@@ -1,0 +1,25 @@
+-- Version Checking Script
+local HttpService = game:GetService("HttpService")
+
+local currentVersion = "0.0.0" -- This should match the version in your main script
+
+-- Fetch the latest version from GitHub
+local function checkVersion()
+    local success, result = pcall(function()
+        return HttpService:GetAsync("https://raw.githubusercontent.com/YourGitHubUserName/YourRepo/main/version.txt")
+    end)
+    
+    if success then
+        local latestVersion = result
+        if latestVersion == currentVersion then
+            print("You are using the latest version: " .. currentVersion)
+        else
+            print("Version: " .. currentVersion .. " | Outdated, please update by going to the LoiScript channel.")
+        end
+    else
+        print("Failed to check for updates. Error: " .. result)
+    end
+end
+
+-- Run the version check
+checkVersion()
